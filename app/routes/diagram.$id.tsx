@@ -14,6 +14,19 @@ import { EnumNode } from "~/components/diagram/enum-node";
 
 import { CONFIG } from "~/lib/utils";
 
+import { addTableAction } from "~/actions/diagram/add-table";
+import { updateTableAction } from "~/actions/diagram/update-table";
+import { deleteTableAction } from "~/actions/diagram/delete-table";
+import { moveTableAction } from "~/actions/diagram/move-table";
+import { addColumnAction } from "~/actions/diagram/add-column";
+import { updateColumnAction } from "~/actions/diagram/update-column";
+import { deleteColumnAction } from "~/actions/diagram/delete-column";
+import { addRelationAction } from "~/actions/diagram/add-relation";
+import { addEnumAction } from "~/actions/diagram/add-enum";
+import { updateEnumAction } from "~/actions/diagram/update-enum";
+import { deleteEnumAction } from "~/actions/diagram/delete-enum";
+import { moveEnumAction } from "~/actions/diagram/move-enum";
+
 export async function loader({ params }: LoaderFunctionArgs) {
     const diagramId = params.id;
     if (!diagramId) throw new Response("Not Found", { status: 404 });
@@ -37,169 +50,34 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const intent = formData.get("intent");
     const diagramId = params.id!;
 
-    if (intent === "addTable") {
-        const name = formData.get("name") as string;
-        const color = formData.get("color") as string || "slate";
-        await diagramService.addTable(diagramId, name, color);
-        return data({ success: true });
+    switch (intent) {
+        case "addTable":
+            return addTableAction(formData, diagramId);
+        case "updateTable":
+            return updateTableAction(formData);
+        case "deleteTable":
+            return deleteTableAction(formData);
+        case "moveTable":
+            return moveTableAction(formData);
+        case "addColumn":
+            return addColumnAction(formData, diagramId);
+        case "updateColumn":
+            return updateColumnAction(formData, diagramId);
+        case "deleteColumn":
+            return deleteColumnAction(formData);
+        case "addRelation":
+            return addRelationAction(formData, diagramId);
+        case "addEnum":
+            return addEnumAction(formData, diagramId);
+        case "updateEnum":
+            return updateEnumAction(formData);
+        case "deleteEnum":
+            return deleteEnumAction(formData);
+        case "moveEnum":
+            return moveEnumAction(formData);
+        default:
+            return null;
     }
-
-    if (intent === "updateTable") {
-        const id = formData.get("id") as string;
-        const name = formData.get("name") as string;
-        const color = formData.get("color") as string;
-
-        const updates: any = {};
-        if (name) updates.name = name;
-        if (color) updates.color = color;
-
-        await diagramService.updateTable(id, updates);
-        return data({ success: true });
-    }
-
-    if (intent === "deleteTable") {
-        const id = formData.get("id") as string;
-        await diagramService.deleteTable(id);
-        return data({ success: true });
-    }
-
-    if (intent === "moveTable") {
-        const id = formData.get("id") as string;
-        const x = parseFloat(formData.get("x") as string);
-        const y = parseFloat(formData.get("y") as string);
-        await diagramService.updateTable(id, { x, y });
-        return data({ success: true });
-    }
-
-    if (intent === "addColumn") {
-        const tableId = formData.get("tableId") as string;
-        const name = formData.get("name") as string;
-        const type = formData.get("type") as string;
-
-        // Handle FK creation if provided
-        const fkTableId = (formData.get("fkTableId") as string) || undefined;
-        const fkColumnId = (formData.get("fkColumnId") as string) || undefined;
-        const onDelete = formData.get("onDelete") as string || "NO ACTION";
-        const onUpdate = formData.get("onUpdate") as string || "NO ACTION";
-
-        const enumId = formData.get("enumId") as string || undefined;
-
-        await diagramService.addColumn({
-            tableId,
-            name,
-            type,
-            isPk: formData.get("isPk") === "on",
-            isNullable: formData.get("isNullable") === "on",
-            fkTableId,
-            fkColumnId,
-            onDelete,
-            onUpdate,
-            diagramId,
-            enumId
-        });
-
-        return data({ success: true });
-    }
-
-    if (intent === "addRelation") {
-        const fromTableId = formData.get("fromTableId") as string;
-        const fromColumnId = formData.get("fromColumnId") as string;
-        const toTableId = formData.get("toTableId") as string;
-        const toColumnId = formData.get("toColumnId") as string;
-
-        if (fromTableId && fromColumnId && toTableId && toColumnId) {
-            await diagramService.addRelation({
-                diagramId,
-                fromTableId,
-                fromColumnId,
-                toTableId,
-                toColumnId
-            });
-            return data({ success: true });
-        }
-        return data({ error: "Missing fields" }, { status: 400 });
-    }
-
-
-    if (intent === "updateColumn") {
-        const id = formData.get("columnId") as string;
-        const name = formData.get("name") as string;
-        const type = formData.get("type") as string;
-        const tableId = formData.get("tableId") as string;
-        const isFk = formData.get("isFk") === "on";
-        const fkTableId = (formData.get("fkTableId") as string) || undefined;
-        const fkColumnId = (formData.get("fkColumnId") as string) || undefined;
-        const onDelete = formData.get("onDelete") as string || "NO ACTION";
-        const onUpdate = formData.get("onUpdate") as string || "NO ACTION";
-
-        const enumId = formData.get("enumId") as string || undefined;
-
-        await diagramService.updateColumn({
-            columnId: id,
-            name,
-            type,
-            isPk: formData.get("isPk") === "on",
-            isNullable: formData.get("isNullable") === "on",
-            isFk,
-            fkTableId,
-            fkColumnId,
-            tableId,
-            onDelete,
-            onUpdate,
-            diagramId,
-            enumId
-        });
-
-        return data({ success: true });
-    }
-
-    if (intent === "deleteColumn") {
-        const id = formData.get("columnId") as string;
-        await diagramService.deleteColumn(id);
-        return data({ success: true });
-    }
-
-    if (intent === "addEnum") {
-        const name = formData.get("name") as string;
-        await diagramService.addEnum(diagramId, name);
-        return data({ success: true });
-    }
-
-    if (intent === "deleteEnum") {
-        const id = formData.get("id") as string;
-        await diagramService.deleteEnum(id);
-        return data({ success: true });
-    }
-
-    if (intent === "updateEnum") {
-        const id = formData.get("id") as string;
-        const name = formData.get("name") as string | null;
-        const color = formData.get("color") as string | null;
-
-        const updates: any = {};
-        if (name !== null) updates.name = name;
-        if (color !== null) updates.color = color;
-
-        await diagramService.updateEnum(id, updates);
-
-        const valuesJson = formData.get("values") as string;
-        if (valuesJson) {
-            const values = JSON.parse(valuesJson) as { id?: string; value: string }[];
-            await diagramService.updateEnumValues(id, values);
-        }
-
-        return data({ success: true });
-    }
-
-    if (intent === "moveEnum") {
-        const id = formData.get("id") as string;
-        const x = parseFloat(formData.get("x") as string);
-        const y = parseFloat(formData.get("y") as string);
-        await diagramService.updateEnum(id, { x, y });
-        return data({ success: true });
-    }
-
-    return null;
 }
 
 export default function DiagramEditor() {
@@ -321,7 +199,7 @@ export default function DiagramEditor() {
     const updateArrows = useCallback(() => {
         setArrowUpdateTrigger(t => t + 1);
     }, []);
-    
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
