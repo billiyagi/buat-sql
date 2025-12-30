@@ -1,18 +1,15 @@
-import { type LoaderFunctionArgs, type ActionFunctionArgs, data, useLoaderData, useFetcher } from "react-router";
+import { type LoaderFunctionArgs, type ActionFunctionArgs, useLoaderData, useFetcher } from "react-router";
 import { diagramService } from "~/services/diagram.service";
 import { Button } from "~/components/ui/button";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Plus, ArrowLeft, Minus, RotateCcw } from "lucide-react";
-import { Link } from "react-router";
+import { Plus, Minus, RotateCcw } from "lucide-react";
 
 import { RelationArrows } from "~/components/diagram/relation-arrows";
 import { DraggableTable } from "~/components/diagram/draggable-table";
-import { AddRelationDialog } from "~/components/diagram/add-relation-dialog";
-import { AddTableDialog } from "~/components/diagram/add-table-dialog";
-import { AddEnumDialog } from "~/components/diagram/add-enum-dialog";
 import { EnumNode } from "~/components/diagram/enum-node";
 
 import { useDiagramCanvas } from "~/hooks/use-diagram-canvas";
+import { useDiagramRelations } from "~/hooks/use-diagram-relations";
+import { DiagramHeader } from "~/components/diagram/diagram-header";
 import { addTableAction } from "~/actions/diagram/add-table";
 import { updateTableAction } from "~/actions/diagram/update-table";
 import { deleteTableAction } from "~/actions/diagram/delete-table";
@@ -82,10 +79,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function DiagramEditor() {
     const { diagram, tables, columns, relations, enums, enumValues } = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
-    const [arrowUpdateTrigger, setArrowUpdateTrigger] = useState(0);
 
-    const [sourceTableId, setSourceTableId] = useState<string>("");
-    const [targetTableId, setTargetTableId] = useState<string>("");
+    const relationState = useDiagramRelations(columns);
+    const { updateArrows, arrowUpdateTrigger } = relationState;
 
     const {
         scale,
@@ -108,57 +104,15 @@ export default function DiagramEditor() {
         );
     };
 
-    const sourceColumns = sourceTableId ? columns.filter(c => c.tableId === sourceTableId) : [];
-    const targetColumns = targetTableId ? columns.filter(c => c.tableId === targetTableId) : [];
-
-    const updateArrows = useCallback(() => {
-        setArrowUpdateTrigger(t => t + 1);
-    }, []);
-
     return (
         <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
-            {/* Header */}
-            <header className="flex-none h-16 border-b px-6 flex items-center justify-between bg-white/80 backdrop-blur-md z-20 sticky top-0">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild className="rounded-full h-8 w-8 hover:bg-slate-100 transition-colors">
-                        <Link to="/"><ArrowLeft className="h-4 w-4 text-slate-600" /></Link>
-                    </Button>
-                    <div className="flex flex-col">
-                        <h1 className="font-bold text-slate-900 leading-tight">{diagram.name}</h1>
-                        <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-                                {tables.length} tables
-                            </span>
-                            <span className="text-[10px] text-slate-400 truncate max-w-[200px]" title={tables.map(t => t.name).join(", ")}>
-                                {tables.map(t => t.name).join(", ")}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-slate-100/50 p-1 rounded-lg border border-slate-200/60 shadow-sm transition-all hover:bg-slate-100">
-                        <Button variant="ghost" size="sm" asChild className="h-8 text-xs font-medium text-slate-700 hover:bg-white hover:shadow-sm">
-                            <a href={`/api/export/${diagram.id}`} download>Export SQL</a>
-                        </Button>
-                        <div className="w-[1px] h-4 bg-slate-300 mx-1" />
-                        <AddRelationDialog
-                            tables={tables}
-                            columns={columns}
-                            sourceTableId={sourceTableId}
-                            setSourceTableId={setSourceTableId}
-                            targetTableId={targetTableId}
-                            setTargetTableId={setTargetTableId}
-                            sourceColumns={sourceColumns}
-                            targetColumns={targetColumns}
-                            fetcher={fetcher}
-                        />
-                    </div>
-
-                    <AddTableDialog fetcher={fetcher} />
-                    <AddEnumDialog fetcher={fetcher} />
-                </div>
-            </header>
+            <DiagramHeader
+                diagram={diagram}
+                tables={tables}
+                columns={columns}
+                fetcher={fetcher}
+                relationState={relationState}
+            />
 
             <div
                 className={`flex-1 overflow-hidden relative p-0 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
