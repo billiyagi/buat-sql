@@ -1,0 +1,509 @@
+import { type LoaderFunctionArgs, type ActionFunctionArgs, data, useLoaderData, useFetcher } from "react-router";
+import { diagramService } from "~/services/diagram.service";
+import { Button } from "~/components/ui/button";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Plus, ArrowLeft, Minus, RotateCcw } from "lucide-react";
+import { Link } from "react-router";
+
+import { RelationArrows } from "~/components/diagram/relation-arrows";
+import { DraggableTable } from "~/components/diagram/draggable-table";
+import { AddRelationDialog } from "~/components/diagram/add-relation-dialog";
+import { AddTableDialog } from "~/components/diagram/add-table-dialog";
+import { AddEnumDialog } from "~/components/diagram/add-enum-dialog";
+import { EnumNode } from "~/components/diagram/enum-node";
+
+import { CONFIG } from "~/lib/utils";
+
+export async function loader({ params }: LoaderFunctionArgs) {
+    const diagramId = params.id;
+    if (!diagramId) throw new Response("Not Found", { status: 404 });
+
+    const diagram = await diagramService.getDiagramById(diagramId);
+    if (!diagram) throw new Response("Not Found", { status: 404 });
+
+    const [tables, columns, relations, enums, enumValues] = await Promise.all([
+        diagramService.getTablesByDiagramId(diagramId),
+        diagramService.getColumnsByDiagramId(diagramId),
+        diagramService.getRelationsByDiagramId(diagramId),
+        diagramService.getEnumsByDiagramId(diagramId),
+        diagramService.getEnumValuesByDiagramId(diagramId)
+    ]);
+
+    return { diagram, tables, columns, relations, enums, enumValues };
+}
+
+export async function action({ request, params }: ActionFunctionArgs) {
+    const formData = await request.formData();
+    const intent = formData.get("intent");
+    const diagramId = params.id!;
+
+    if (intent === "addTable") {
+        const name = formData.get("name") as string;
+        const color = formData.get("color") as string || "slate";
+        await diagramService.addTable(diagramId, name, color);
+        return data({ success: true });
+    }
+
+    if (intent === "updateTable") {
+        const id = formData.get("id") as string;
+        const name = formData.get("name") as string;
+        const color = formData.get("color") as string;
+
+        const updates: any = {};
+        if (name) updates.name = name;
+        if (color) updates.color = color;
+
+        await diagramService.updateTable(id, updates);
+        return data({ success: true });
+    }
+
+    if (intent === "deleteTable") {
+        const id = formData.get("id") as string;
+        await diagramService.deleteTable(id);
+        return data({ success: true });
+    }
+
+    if (intent === "moveTable") {
+        const id = formData.get("id") as string;
+        const x = parseFloat(formData.get("x") as string);
+        const y = parseFloat(formData.get("y") as string);
+        await diagramService.updateTable(id, { x, y });
+        return data({ success: true });
+    }
+
+    if (intent === "addColumn") {
+        const tableId = formData.get("tableId") as string;
+        const name = formData.get("name") as string;
+        const type = formData.get("type") as string;
+
+        // Handle FK creation if provided
+        const fkTableId = (formData.get("fkTableId") as string) || undefined;
+        const fkColumnId = (formData.get("fkColumnId") as string) || undefined;
+        const onDelete = formData.get("onDelete") as string || "NO ACTION";
+        const onUpdate = formData.get("onUpdate") as string || "NO ACTION";
+
+        const enumId = formData.get("enumId") as string || undefined;
+
+        await diagramService.addColumn({
+            tableId,
+            name,
+            type,
+            isPk: formData.get("isPk") === "on",
+            isNullable: formData.get("isNullable") === "on",
+            fkTableId,
+            fkColumnId,
+            onDelete,
+            onUpdate,
+            diagramId,
+            enumId
+        });
+
+        return data({ success: true });
+    }
+
+    if (intent === "addRelation") {
+        const fromTableId = formData.get("fromTableId") as string;
+        const fromColumnId = formData.get("fromColumnId") as string;
+        const toTableId = formData.get("toTableId") as string;
+        const toColumnId = formData.get("toColumnId") as string;
+
+        if (fromTableId && fromColumnId && toTableId && toColumnId) {
+            await diagramService.addRelation({
+                diagramId,
+                fromTableId,
+                fromColumnId,
+                toTableId,
+                toColumnId
+            });
+            return data({ success: true });
+        }
+        return data({ error: "Missing fields" }, { status: 400 });
+    }
+
+
+    if (intent === "updateColumn") {
+        const id = formData.get("columnId") as string;
+        const name = formData.get("name") as string;
+        const type = formData.get("type") as string;
+        const tableId = formData.get("tableId") as string;
+        const isFk = formData.get("isFk") === "on";
+        const fkTableId = (formData.get("fkTableId") as string) || undefined;
+        const fkColumnId = (formData.get("fkColumnId") as string) || undefined;
+        const onDelete = formData.get("onDelete") as string || "NO ACTION";
+        const onUpdate = formData.get("onUpdate") as string || "NO ACTION";
+
+        const enumId = formData.get("enumId") as string || undefined;
+
+        await diagramService.updateColumn({
+            columnId: id,
+            name,
+            type,
+            isPk: formData.get("isPk") === "on",
+            isNullable: formData.get("isNullable") === "on",
+            isFk,
+            fkTableId,
+            fkColumnId,
+            tableId,
+            onDelete,
+            onUpdate,
+            diagramId,
+            enumId
+        });
+
+        return data({ success: true });
+    }
+
+    if (intent === "deleteColumn") {
+        const id = formData.get("columnId") as string;
+        await diagramService.deleteColumn(id);
+        return data({ success: true });
+    }
+
+    if (intent === "addEnum") {
+        const name = formData.get("name") as string;
+        await diagramService.addEnum(diagramId, name);
+        return data({ success: true });
+    }
+
+    if (intent === "deleteEnum") {
+        const id = formData.get("id") as string;
+        await diagramService.deleteEnum(id);
+        return data({ success: true });
+    }
+
+    if (intent === "updateEnum") {
+        const id = formData.get("id") as string;
+        const name = formData.get("name") as string | null;
+        const color = formData.get("color") as string | null;
+
+        const updates: any = {};
+        if (name !== null) updates.name = name;
+        if (color !== null) updates.color = color;
+
+        await diagramService.updateEnum(id, updates);
+
+        const valuesJson = formData.get("values") as string;
+        if (valuesJson) {
+            const values = JSON.parse(valuesJson) as { id?: string; value: string }[];
+            await diagramService.updateEnumValues(id, values);
+        }
+
+        return data({ success: true });
+    }
+
+    if (intent === "moveEnum") {
+        const id = formData.get("id") as string;
+        const x = parseFloat(formData.get("x") as string);
+        const y = parseFloat(formData.get("y") as string);
+        await diagramService.updateEnum(id, { x, y });
+        return data({ success: true });
+    }
+
+    return null;
+}
+
+export default function DiagramEditor() {
+    const TABLE_WIDTH = CONFIG.TABLE_WIDTH;
+    const TABLE_HEIGHT = CONFIG.TABLE_HEIGHT;
+
+    const { diagram, tables, columns, relations, enums, enumValues } = useLoaderData<typeof loader>();
+    const fetcher = useFetcher();
+    const [arrowUpdateTrigger, setArrowUpdateTrigger] = useState(0);
+
+    const [sourceTableId, setSourceTableId] = useState<string>("");
+    const [targetTableId, setTargetTableId] = useState<string>("");
+    const [scale, setScale] = useState(1);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+    const [hasInitialized, setHasInitialized] = useState(false);
+    const canvasRef = useRef<HTMLDivElement>(null!);
+    const lastMousePos = useRef({ x: 0, y: 0 });
+
+    useEffect(() => {
+        if (hasInitialized || tables.length === 0) return;
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const minX = Math.min(...tables.map(t => t.x));
+        const maxX = Math.max(...tables.map(t => t.x + TABLE_WIDTH));
+        const minY = Math.min(...tables.map(t => t.y));
+        const maxY = Math.max(...tables.map(t => t.y + TABLE_HEIGHT));
+
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        const canvasRect = canvas.getBoundingClientRect();
+        const viewCenterX = canvasRect.width / 2;
+        const viewCenterY = canvasRect.height / 2;
+
+        setPan({
+            x: viewCenterX - centerX,
+            y: viewCenterY - centerY
+        });
+        setHasInitialized(true);
+    }, [tables, hasInitialized]);
+
+    const handleZoomIn = () => setScale(s => Math.min(s + 0.1, 2));
+    const handleZoomOut = () => setScale(s => Math.max(s - 0.1, 0.5));
+    const handleResetZoom = () => {
+        setScale(1);
+        if (tables.length > 0 && canvasRef.current) {
+            const minX = Math.min(...tables.map(t => t.x));
+            const maxX = Math.max(...tables.map(t => t.x + TABLE_WIDTH));
+            const minY = Math.min(...tables.map(t => t.y));
+            const maxY = Math.max(...tables.map(t => t.y + TABLE_HEIGHT));
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const canvasRect = canvasRef.current.getBoundingClientRect();
+            setPan({
+                x: canvasRect.width / 2 - centerX,
+                y: canvasRect.height / 2 - centerY
+            });
+        } else {
+            setPan({ x: 0, y: 0 });
+        }
+    };
+
+    const handleCanvasMouseDown = (e: React.MouseEvent) => {
+        const target = e.target as HTMLElement;
+
+        if (target.closest('[role="dialog"]') ||
+            target.closest('[data-radix-popper-content-wrapper]') ||
+            target.closest('[data-radix-portal]') ||
+            target.closest('.drag-handle') ||
+            target.closest('.enum-handle') ||
+            target.closest('button') ||
+            target.closest('.no-pan')) {
+            return;
+        }
+
+        setIsPanning(true);
+        lastMousePos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleCanvasMouseMove = (e: React.MouseEvent) => {
+        if (!isPanning) return;
+        const dx = e.clientX - lastMousePos.current.x;
+        const dy = e.clientY - lastMousePos.current.y;
+        setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+        lastMousePos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleStop = (e: any, data: any, id: string) => {
+        const isEnum = enums.some(en => en.id === id);
+        fetcher.submit(
+            { intent: isEnum ? "moveEnum" : "moveTable", id, x: data.x, y: data.y },
+            { method: "post" }
+        );
+    };
+
+    const sourceColumns = sourceTableId ? columns.filter(c => c.tableId === sourceTableId) : [];
+    const targetColumns = targetTableId ? columns.filter(c => c.tableId === targetTableId) : [];
+
+    const scaleRef = useRef(scale);
+    const panRef = useRef(pan);
+
+    useEffect(() => {
+        scaleRef.current = scale;
+        panRef.current = pan;
+    }, [scale, pan]);
+
+    useEffect(() => {
+        const handleGlobalMouseUp = () => {
+            setIsPanning(false);
+        };
+
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    }, []);
+
+    const updateArrows = useCallback(() => {
+        setArrowUpdateTrigger(t => t + 1);
+    }, []);
+    
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const onWheel = (e: WheelEvent) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+
+            const currentScale = scaleRef.current;
+            const currentPan = panRef.current;
+
+            const zoomSensitivity = 0.001;
+            const delta = -e.deltaY * zoomSensitivity;
+
+            const newScale = Math.min(Math.max(0.1, currentScale + delta), 3);
+
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const worldX = (mouseX - currentPan.x) / currentScale;
+            const worldY = (mouseY - currentPan.y) / currentScale;
+
+            const newPanX = mouseX - worldX * newScale;
+            const newPanY = mouseY - worldY * newScale;
+
+            setScale(newScale);
+            setPan({ x: newPanX, y: newPanY });
+        };
+
+        canvas.addEventListener('wheel', onWheel, { passive: false });
+        return () => {
+            canvas.removeEventListener('wheel', onWheel);
+        };
+    }, []);
+
+    return (
+        <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
+            {/* Header */}
+            <header className="flex-none h-16 border-b px-6 flex items-center justify-between bg-white/80 backdrop-blur-md z-20 sticky top-0">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" asChild className="rounded-full h-8 w-8 hover:bg-slate-100 transition-colors">
+                        <Link to="/"><ArrowLeft className="h-4 w-4 text-slate-600" /></Link>
+                    </Button>
+                    <div className="flex flex-col">
+                        <h1 className="font-bold text-slate-900 leading-tight">{diagram.name}</h1>
+                        <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                {tables.length} tables
+                            </span>
+                            <span className="text-[10px] text-slate-400 truncate max-w-[200px]" title={tables.map(t => t.name).join(", ")}>
+                                {tables.map(t => t.name).join(", ")}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center bg-slate-100/50 p-1 rounded-lg border border-slate-200/60 shadow-sm transition-all hover:bg-slate-100">
+                        <Button variant="ghost" size="sm" asChild className="h-8 text-xs font-medium text-slate-700 hover:bg-white hover:shadow-sm">
+                            <a href={`/api/export/${diagram.id}`} download>Export SQL</a>
+                        </Button>
+                        <div className="w-[1px] h-4 bg-slate-300 mx-1" />
+                        <AddRelationDialog
+                            tables={tables}
+                            columns={columns}
+                            sourceTableId={sourceTableId}
+                            setSourceTableId={setSourceTableId}
+                            targetTableId={targetTableId}
+                            setTargetTableId={setTargetTableId}
+                            sourceColumns={sourceColumns}
+                            targetColumns={targetColumns}
+                            fetcher={fetcher}
+                        />
+                    </div>
+
+                    <AddTableDialog fetcher={fetcher} />
+                    <AddEnumDialog fetcher={fetcher} />
+                </div>
+            </header>
+
+            <div
+                className={`flex-1 overflow-hidden relative p-0 ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
+                id="canvas"
+                ref={canvasRef}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={() => setIsPanning(false)}
+                onMouseLeave={() => setIsPanning(false)}
+                style={{
+                    backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+                    backgroundSize: `${20 * scale}px ${20 * scale}px`,
+                    backgroundPosition: `${pan.x}px ${pan.y}px`,
+                }}
+            >
+                {/* Floating controls */}
+                <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2">
+                    <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md border border-slate-200 shadow-xl rounded-full p-1.5 ring-1 ring-slate-900/5">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100" onClick={handleZoomOut} title="Zoom Out">
+                            <Minus className="h-4 w-4 text-slate-600" />
+                        </Button>
+                        <div className="w-12 text-center">
+                            <span className="text-xs font-bold text-slate-700 tabular-nums">
+                                {Math.round(scale * 100)}%
+                            </span>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100" onClick={handleZoomIn} title="Zoom In">
+                            <Plus className="h-4 w-4 text-slate-600" />
+                        </Button>
+                        <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100" onClick={handleResetZoom} title="Reset View">
+                            <RotateCcw className="h-4 w-4 text-slate-600" />
+                        </Button>
+                    </div>
+                </div>
+                {/* Transformed container for tables */}
+                <div
+                    id="transform-container"
+                    style={{
+                        transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                        transformOrigin: '0 0',
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                        zIndex: 50
+                    }}
+                >
+                    {tables.map(table => {
+                        const tableColumns = columns.filter(c => c.tableId === table.id);
+                        return (
+                            <DraggableTable
+                                key={table.id}
+                                table={table}
+                                columns={tableColumns}
+                                allTables={tables}
+                                allColumns={columns}
+                                relations={relations}
+                                onStop={handleStop}
+                                updateArrows={updateArrows}
+                                fetcher={fetcher}
+                                scale={scale}
+                                enums={enums}
+                                allEnumValues={enumValues}
+                            />
+                        );
+                    })}
+
+                    {enums.map(en => {
+                        const values = enumValues.filter(v => v.enumId === en.id);
+                        return (
+                            <EnumNode
+                                key={en.id}
+                                enumData={en}
+                                enumValues={values}
+                                allEnums={enums}
+                                allTables={tables}
+                                allColumns={columns}
+                                allEnumValues={enumValues}
+                                onStop={handleStop}
+                                updateArrows={updateArrows}
+                                fetcher={fetcher}
+                                scale={scale}
+                            />
+                        );
+                    })}
+                </div>
+
+                <RelationArrows
+                    relations={relations}
+                    columns={columns}
+                    scale={scale}
+                    pan={pan}
+                    canvasRef={canvasRef}
+                    updateTrigger={arrowUpdateTrigger}
+                />
+            </div>
+        </div>
+    );
+}
+
