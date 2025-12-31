@@ -57,12 +57,28 @@ export class DiagramService {
     }
 
     async addTable(diagramId: string, name: string, color: string = "slate") {
+        // Get existing tables and enums to calculate smart position
+        const existingTables = await this.getTablesByDiagramId(diagramId);
+        const existingEnums = await this.getEnumsByDiagramId(diagramId);
+
+        let newX = 100;
+        let newY = 100;
+
+        const allNodes = [...existingTables, ...existingEnums];
+        if (allNodes.length > 0) {
+            // Find the rightmost node and place new table to its right
+            const rightmostNode = allNodes.reduce((max, node) =>
+                node.x > max.x ? node : max, allNodes[0]);
+            newX = rightmostNode.x + 300; // 300 = table width + padding
+            newY = rightmostNode.y;
+        }
+
         return await db.insert(tables).values({
             id: crypto.randomUUID(),
             diagramId,
             name,
-            x: 100,
-            y: 100,
+            x: newX,
+            y: newY,
             color
         });
     }
@@ -185,13 +201,29 @@ export class DiagramService {
     }
 
     async addEnum(diagramId: string, name: string, color: string = "#10b981") {
+        // Get existing tables and enums to calculate smart position
+        const existingTables = await this.getTablesByDiagramId(diagramId);
+        const existingEnums = await this.getEnumsByDiagramId(diagramId);
+
+        let newX = 100;
+        let newY = 100;
+
+        const allNodes = [...existingTables, ...existingEnums];
+        if (allNodes.length > 0) {
+            // Find the rightmost node and place new enum to its right
+            const rightmostNode = allNodes.reduce((max, node) =>
+                node.x > max.x ? node : max, allNodes[0]);
+            newX = rightmostNode.x + 300; // 300 = node width + padding
+            newY = rightmostNode.y;
+        }
+
         const id = crypto.randomUUID();
         await db.insert(enums).values({
             id,
             diagramId,
             name,
-            x: 100,
-            y: 100,
+            x: newX,
+            y: newY,
             color
         });
         return id;
