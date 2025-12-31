@@ -139,7 +139,7 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
                 height: '100%',
                 pointerEvents: 'none',
                 overflow: 'visible',
-                zIndex: 0,
+                zIndex: 5,
             }}
         >
             <defs>

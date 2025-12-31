@@ -145,7 +145,17 @@ export default function DiagramEditor() {
                         opacity: scale < 0.4 ? 0.4 : (scale < 0.7 ? 0.7 : 1), // Optional: fade the whole background slightly if very zoomed out
                     }}
                 >
-                    {/* Transformed container for tables */}
+                    {/* Arrows rendered first so they appear below nodes */}
+                    <RelationArrows
+                        relations={relations}
+                        columns={columns}
+                        scale={scale}
+                        pan={pan}
+                        canvasRef={canvasRef}
+                        updateTrigger={arrowUpdateTrigger}
+                    />
+
+                    {/* Transformed container for tables - z-index higher than arrows */}
                     <div
                         id="transform-container"
                         style={{
@@ -154,6 +164,7 @@ export default function DiagramEditor() {
                             width: '100%',
                             height: '100%',
                             position: 'relative',
+                            zIndex: 10,
                         }}
                     >
                         {tables.map(table => {
@@ -195,15 +206,6 @@ export default function DiagramEditor() {
                             );
                         })}
                     </div>
-
-                    <RelationArrows
-                        relations={relations}
-                        columns={columns}
-                        scale={scale}
-                        pan={pan}
-                        canvasRef={canvasRef}
-                        updateTrigger={arrowUpdateTrigger}
-                    />
                 </div>
 
                 {/* Floating controls - outside canvas to avoid event conflicts */}
