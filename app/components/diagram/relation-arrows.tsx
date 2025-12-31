@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
 import type { RelationArrowsProps } from "./types";
+import { useTheme } from "~/components/theme-provider";
 
 export function RelationArrows({ relations, columns, scale, pan, canvasRef, updateTrigger }: RelationArrowsProps) {
     const [paths, setPaths] = useState<Array<{ id: string; d: string; markerType: 'right' | 'left' | 'down' | 'up' }>>([]);
+    const { theme } = useTheme();
+
+    // Theme-based colors
+    const tableRelationColor = theme === 'dark' ? "#94a3b8" : "#64748b"; // Slate 400 vs 500
+    const enumRelationColor = theme === 'dark' ? "#10b981" : "#059669"; // Emerald 500 vs 600
 
     useEffect(() => {
         const calculatePaths = () => {
@@ -147,7 +153,7 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
                     orient="auto"
                     markerUnits="strokeWidth"
                 >
-                    <circle cx="4" cy="4" r="3" fill="#64748b" />
+                    <circle cx="4" cy="4" r="3" fill={tableRelationColor} />
                 </marker>
                 {/* End marker - arrow (PK target) */}
                 <marker
@@ -159,7 +165,7 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
                     orient="auto"
                     markerUnits="strokeWidth"
                 >
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+                    <polygon points="0 0, 10 3.5, 0 7" fill={tableRelationColor} />
                 </marker>
                 {/* Enum marker - emerald diamond */}
                 <marker
@@ -171,7 +177,7 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
                     orient="auto"
                     markerUnits="strokeWidth"
                 >
-                    <rect x="2" y="2" width="6" height="6" transform="rotate(45 5 5)" fill="#10b981" />
+                    <rect x="2" y="2" width="6" height="6" transform="rotate(45 5 5)" fill={enumRelationColor} />
                 </marker>
                 {/* Enum arrow - emerald arrow head */}
                 <marker
@@ -183,7 +189,7 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
                     orient="auto"
                     markerUnits="strokeWidth"
                 >
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#059669" />
+                    <polygon points="0 0, 10 3.5, 0 7" fill={enumRelationColor} />
                 </marker>
             </defs>
             <style>
@@ -204,7 +210,7 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
                     d={d}
                     className="relation-path"
                     fill="none"
-                    stroke={id.startsWith('enum-rel') ? "#059669" : "#64748b"}
+                    stroke={id.startsWith('enum-rel') ? enumRelationColor : tableRelationColor}
                     strokeWidth={1.5}
                     strokeDasharray={id.startsWith('enum-rel') ? "3 3" : "4 2"}
                     markerStart={id.startsWith('enum-rel') ? "none" : "url(#start-circle)"}
