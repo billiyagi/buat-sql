@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import type { RelationArrowsProps } from "./types";
 import { useTheme } from "~/components/theme-provider";
 
-export function RelationArrows({ relations, columns, scale, pan, canvasRef, updateTrigger }: RelationArrowsProps) {
+export const RelationArrows = React.memo(function RelationArrows({ relations, columns, scale, pan, canvasRef, updateTrigger }: RelationArrowsProps) {
     const [paths, setPaths] = useState<Array<{ id: string; d: string; markerType: 'right' | 'left' | 'down' | 'up' }>>([]);
     const { theme } = useTheme();
 
@@ -219,4 +219,4 @@ export function RelationArrows({ relations, columns, scale, pan, canvasRef, upda
             ))}
         </svg>
     );
-}
+});

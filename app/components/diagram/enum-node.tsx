@@ -1,5 +1,5 @@
 import Draggable from 'react-draggable';
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 import { Settings2, Trash2, Plus, GripVertical, Palette } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -33,7 +33,7 @@ const colors = [
     { name: 'Slate', value: '#64748b', bg: 'bg-slate-50', darkBg: 'dark:bg-slate-900/30', border: 'border-slate-200', darkBorder: 'dark:border-slate-800/50', text: 'text-slate-700', darkText: 'dark:text-slate-100' },
 ];
 
-export function EnumNode({ enumData, enumValues, allEnums, allTables, allColumns, allEnumValues, onStop, updateArrows, fetcher: propFetcher, scale }: EnumNodeProps) {
+export const EnumNode = React.memo(function EnumNode({ enumData, enumValues, allEnums, allTables, allColumns, allEnumValues, onStop, updateArrows, fetcher: propFetcher, scale }: EnumNodeProps) {
     const fetcher = useFetcher();
     const nodeRef = useRef<HTMLDivElement>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -259,4 +259,4 @@ export function EnumNode({ enumData, enumValues, allEnums, allTables, allColumns
             </div>
         </Draggable>
     );
-}
+});

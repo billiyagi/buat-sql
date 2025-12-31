@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Draggable from "react-draggable";
 import { GripVertical, Trash, Palette } from "lucide-react";
 import {
@@ -31,7 +31,7 @@ const colors = [
     { name: 'Orange', value: 'orange', bg: 'bg-orange-50', darkBg: 'dark:bg-orange-900/30', border: 'border-orange-200', darkBorder: 'dark:border-orange-800/50', text: 'text-orange-900', darkText: 'dark:text-orange-100' },
 ];
 
-export function DraggableTable({ table, columns, allTables, allColumns, relations, onStop, updateArrows, fetcher, scale, enums, allEnumValues }: DraggableTableProps) {
+export const DraggableTable = React.memo(function DraggableTable({ table, columns, allTables, allColumns, relations, onStop, updateArrows, fetcher, scale, enums, allEnumValues }: DraggableTableProps) {
     // ... logic remains same ...
     const nodeRef = useRef<HTMLDivElement>(null);
     const [isFk, setIsFk] = useState(false);
@@ -210,4 +210,4 @@ export function DraggableTable({ table, columns, allTables, allColumns, relation
             </div>
         </Draggable>
     );
-}
+});
