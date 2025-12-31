@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { type LoaderFunctionArgs, type ActionFunctionArgs, useLoaderData, useFetcher } from "react-router";
 import { diagramService } from "~/services/diagram.service";
 import { Button } from "~/components/ui/button";
@@ -6,6 +7,7 @@ import { Plus, Minus, RotateCcw } from "lucide-react";
 import { RelationArrows } from "~/components/diagram/relation-arrows";
 import { DraggableTable } from "~/components/diagram/draggable-table";
 import { EnumNode } from "~/components/diagram/enum-node";
+import { useTheme } from "~/components/theme-provider";
 
 import { useDiagramCanvas } from "~/hooks/use-diagram-canvas";
 import { useDiagramRelations } from "~/hooks/use-diagram-relations";
@@ -94,7 +96,7 @@ export default function DiagramEditor() {
         handleCanvasMouseDown,
         handleCanvasMouseMove,
         setIsPanning
-    } = useDiagramCanvas(tables);
+    } = useDiagramCanvas(tables, enums);
 
     const handleStop = (e: any, data: any, id: string) => {
         const isEnum = enums.some(en => en.id === id);
@@ -104,14 +106,25 @@ export default function DiagramEditor() {
         );
     };
 
+    const { theme } = useTheme();
+    // Use state for dotColor to ensure proper SSR hydration and reactivity
+    const [dotColor, setDotColor] = useState("#334155"); // Default to dark
+
+    useEffect(() => {
+        // Small timeout to ensure ThemeProvider has updated the DOM class
+        const timer = setTimeout(() => {
+            const isDark = document.documentElement.classList.contains("dark");
+            setDotColor(isDark ? "#334155" : "#cbd5e1");
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [theme]); // Re-run when theme changes
+
     return (
-        <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
+        <div className="h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
             <DiagramHeader
                 diagram={diagram}
                 tables={tables}
-                columns={columns}
                 fetcher={fetcher}
-                relationState={relationState}
             />
 
             {/* Wrapper for canvas and floating controls */}
@@ -126,9 +139,10 @@ export default function DiagramEditor() {
                     onMouseUp={() => setIsPanning(false)}
                     onMouseLeave={() => setIsPanning(false)}
                     style={{
-                        backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)',
+                        backgroundImage: `radial-gradient(${dotColor} ${Math.max(0.5, 0.8 * scale)}px, transparent 0)`,
                         backgroundSize: `${20 * scale}px ${20 * scale}px`,
                         backgroundPosition: `${pan.x}px ${pan.y}px`,
+                        opacity: scale < 0.4 ? 0.4 : (scale < 0.7 ? 0.7 : 1), // Optional: fade the whole background slightly if very zoomed out
                     }}
                 >
                     {/* Transformed container for tables */}
@@ -198,21 +212,21 @@ export default function DiagramEditor() {
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center gap-1 bg-white/90 backdrop-blur-md border border-slate-200 shadow-xl rounded-full p-1.5 ring-1 ring-slate-900/5">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100" onClick={handleZoomOut} title="Zoom Out">
-                            <Minus className="h-4 w-4 text-slate-600" />
+                    <div className="flex items-center gap-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-xl rounded-full p-1.5 ring-1 ring-slate-900/5 dark:ring-white/10">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={handleZoomOut} title="Zoom Out">
+                            <Minus className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         </Button>
                         <div className="w-12 text-center">
-                            <span className="text-xs font-bold text-slate-700 tabular-nums">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 tabular-nums">
                                 {Math.round(scale * 100)}%
                             </span>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100" onClick={handleZoomIn} title="Zoom In">
-                            <Plus className="h-4 w-4 text-slate-600" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={handleZoomIn} title="Zoom In">
+                            <Plus className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         </Button>
-                        <div className="w-[1px] h-4 bg-slate-200 mx-1" />
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100" onClick={handleResetZoom} title="Reset View">
-                            <RotateCcw className="h-4 w-4 text-slate-600" />
+                        <div className="w-[1px] h-4 bg-slate-200 dark:bg-slate-800 mx-1" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onClick={handleResetZoom} title="Reset View">
+                            <RotateCcw className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                         </Button>
                     </div>
                 </div>

@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { CONFIG } from "~/lib/utils";
 
-interface Table {
+interface Node {
     x: number;
     y: number;
 }
 
-export function useDiagramCanvas(tables: Table[]) {
+export function useDiagramCanvas(tables: Node[], enums: Node[] = []) {
     const TABLE_WIDTH = CONFIG.TABLE_WIDTH;
     const TABLE_HEIGHT = CONFIG.TABLE_HEIGHT;
 
@@ -27,15 +27,16 @@ export function useDiagramCanvas(tables: Table[]) {
 
     // Initial centering
     useEffect(() => {
-        if (hasInitialized || tables.length === 0) return;
+        const allNodes = [...tables, ...enums];
+        if (hasInitialized || allNodes.length === 0) return;
 
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const minX = Math.min(...tables.map(t => t.x));
-        const maxX = Math.max(...tables.map(t => t.x + TABLE_WIDTH));
-        const minY = Math.min(...tables.map(t => t.y));
-        const maxY = Math.max(...tables.map(t => t.y + TABLE_HEIGHT));
+        const minX = Math.min(...allNodes.map(t => t.x));
+        const maxX = Math.max(...allNodes.map(t => t.x + TABLE_WIDTH));
+        const minY = Math.min(...allNodes.map(t => t.y));
+        const maxY = Math.max(...allNodes.map(t => t.y + TABLE_HEIGHT));
 
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
@@ -49,18 +50,19 @@ export function useDiagramCanvas(tables: Table[]) {
             y: viewCenterY - centerY
         });
         setHasInitialized(true);
-    }, [tables, hasInitialized, TABLE_WIDTH, TABLE_HEIGHT]);
+    }, [tables, enums, hasInitialized, TABLE_WIDTH, TABLE_HEIGHT]);
 
     const handleZoomIn = () => setScale(s => Math.min(s + 0.1, 2));
     const handleZoomOut = () => setScale(s => Math.max(s - 0.1, 0.5));
 
     const handleResetZoom = () => {
         setScale(1);
-        if (tables.length > 0 && canvasRef.current) {
-            const minX = Math.min(...tables.map(t => t.x));
-            const maxX = Math.max(...tables.map(t => t.x + TABLE_WIDTH));
-            const minY = Math.min(...tables.map(t => t.y));
-            const maxY = Math.max(...tables.map(t => t.y + TABLE_HEIGHT));
+        const allNodes = [...tables, ...enums];
+        if (allNodes.length > 0 && canvasRef.current) {
+            const minX = Math.min(...allNodes.map(t => t.x));
+            const maxX = Math.max(...allNodes.map(t => t.x + TABLE_WIDTH));
+            const minY = Math.min(...allNodes.map(t => t.y));
+            const maxY = Math.max(...allNodes.map(t => t.y + TABLE_HEIGHT));
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
             const canvasRect = canvasRef.current.getBoundingClientRect();
