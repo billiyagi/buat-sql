@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ArrowLeft, Download, Database, Code, FileCode, Check } from "lucide-react";
+import { ArrowLeft, Download, Database, Code, FileCode, FlaskConical } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { AddTableDialog } from "./add-table-dialog";
 import { AddEnumDialog } from "./add-enum-dialog";
@@ -17,12 +17,14 @@ interface DiagramHeaderProps {
     diagram: { id: string; name: string };
     tables: any[];
     fetcher: FetcherWithComponents<any>;
+    onOpenSandbox: () => void;
 }
 
 export function DiagramHeader({
     diagram,
     tables,
     fetcher,
+    onOpenSandbox,
 }: DiagramHeaderProps) {
     return (
         <header className="flex-none h-16 border-b px-6 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-20 sticky top-0 transition-colors">
@@ -44,6 +46,16 @@ export function DiagramHeader({
                 <ThemeToggle />
 
                 <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-800 mx-1" />
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 font-medium border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-all"
+                    onClick={onOpenSandbox}
+                >
+                    <FlaskConical className="h-4 w-4" />
+                    Test Data
+                </Button>
 
                 <Popover>
                     <PopoverTrigger asChild>

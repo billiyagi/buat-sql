@@ -172,6 +172,7 @@ export const DraggableTable = React.memo(function DraggableTable({ table, column
                                     relations={relations}
                                     fetcher={fetcher}
                                     enums={enums}
+                                    allEnumValues={allEnumValues}
                                 />
                             ))}
                             <AddColumnDialog
@@ -184,6 +185,7 @@ export const DraggableTable = React.memo(function DraggableTable({ table, column
                                 selectedFkTableId={selectedFkTableId}
                                 setSelectedFkTableId={setSelectedFkTableId}
                                 enums={enums}
+                                allEnumValues={allEnumValues}
                             />
                         </div>
                     </ContextMenuTrigger>

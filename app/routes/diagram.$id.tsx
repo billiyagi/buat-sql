@@ -12,6 +12,7 @@ import { useTheme } from "~/components/theme-provider";
 import { useDiagramCanvas } from "~/hooks/use-diagram-canvas";
 import { useDiagramRelations } from "~/hooks/use-diagram-relations";
 import { DiagramHeader } from "~/components/diagram/diagram-header";
+import { SandboxPanel } from "~/components/diagram/sandbox-panel";
 import { addTableAction } from "~/actions/diagram/add-table";
 import { updateTableAction } from "~/actions/diagram/update-table";
 import { deleteTableAction } from "~/actions/diagram/delete-table";
@@ -81,6 +82,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 export default function DiagramEditor() {
     const { diagram, tables, columns, relations, enums, enumValues } = useLoaderData<typeof loader>();
     const fetcher = useFetcher();
+    const [showSandbox, setShowSandbox] = useState(false);
 
     const relationState = useDiagramRelations(columns);
     const { updateArrows, arrowUpdateTrigger } = relationState;
@@ -143,6 +145,7 @@ export default function DiagramEditor() {
                 diagram={diagram}
                 tables={tables}
                 fetcher={fetcher}
+                onOpenSandbox={() => setShowSandbox(true)}
             />
 
             {/* Wrapper for canvas and floating controls */}
@@ -228,7 +231,7 @@ export default function DiagramEditor() {
 
                 {/* Floating controls - outside canvas to avoid event conflicts */}
                 <div
-                    className="absolute bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-auto"
+                    className={`absolute bottom-6 z-[9999] flex flex-col gap-2 pointer-events-auto transition-all duration-300 ${showSandbox ? 'right-[830px]' : 'right-6'}`}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                 >
@@ -251,6 +254,26 @@ export default function DiagramEditor() {
                     </div>
                 </div>
             </div>
+
+            {/* Sandbox Panel with Backdrop */}
+            {showSandbox && (
+                <>
+                    {/* Backdrop blur overlay */}
+                    <div
+                        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+                        onClick={() => setShowSandbox(false)}
+                    />
+                    <SandboxPanel
+                        diagramId={diagram.id}
+                        tables={tables}
+                        columns={columns}
+                        enums={enums}
+                        enumValues={enumValues}
+                        relations={relations}
+                        onClose={() => setShowSandbox(false)}
+                    />
+                </>
+            )}
         </div>
     );
 }
