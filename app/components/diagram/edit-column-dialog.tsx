@@ -84,11 +84,13 @@ export function EditColumnDialog({
                 >
                     <div className="flex items-center gap-2">
                         {column.isPk && <div className="w-1 h-3 bg-yellow-400 dark:bg-yellow-500 rounded-full" title="Primary Key" />}
-                        {!column.isPk && <div className="w-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full" />}
+                        {existingRelation && <div className="w-1 h-3 bg-blue-400 dark:bg-blue-500 rounded-full" title="Foreign Key" />}
+                        {!column.isPk && !existingRelation && <div className="w-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-full" />}
 
                         <span className={`font-medium ${column.isPk ? "text-slate-900 dark:text-slate-100" : "text-slate-600 dark:text-slate-200"}`}>{column.name}</span>
                         {column.isPk && <span className="text-[9px] px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/80 text-yellow-700 dark:text-yellow-100 rounded font-bold uppercase tracking-wide">PK</span>}
-                        {existingRelation && <span className="text-[9px] px-1 py-0.5 bg-orange-100 dark:bg-orange-900/80 text-orange-700 dark:text-orange-100 rounded font-bold uppercase tracking-wide">FK</span>}
+                        {existingRelation && <span className="text-[9px] px-1 py-0.5 bg-blue-100 dark:bg-blue-900/80 text-blue-700 dark:text-blue-100 rounded font-bold uppercase tracking-wide">FK</span>}
+                        {column.defaultValue && <span className="text-[9px] px-1 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded font-bold uppercase tracking-wide border border-slate-200 dark:border-slate-700">DF</span>}
                     </div>
                     <span className="text-muted-foreground dark:text-slate-400 text-[10px] font-mono tracking-tight">{column.type}</span>
                 </div>
