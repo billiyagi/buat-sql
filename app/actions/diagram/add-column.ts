@@ -12,6 +12,8 @@ export async function addColumnAction(formData: FormData, diagramId: string) {
     const onUpdate = formData.get("onUpdate") as string || "NO ACTION";
 
     const enumId = formData.get("enumId") as string || undefined;
+    let defaultValue = formData.get("defaultValue") as string || undefined;
+    if (defaultValue === "__NONE__") defaultValue = undefined;
 
     await diagramService.addColumn({
         tableId,
@@ -24,7 +26,8 @@ export async function addColumnAction(formData: FormData, diagramId: string) {
         onDelete,
         onUpdate,
         diagramId,
-        enumId
+        enumId,
+        defaultValue
     });
 
     return data({ success: true });

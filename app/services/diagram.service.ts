@@ -20,7 +20,8 @@ export class DiagramService {
             type: columns.type,
             isPk: columns.isPk,
             isNullable: columns.isNullable,
-            enumId: columns.enumId
+            enumId: columns.enumId,
+            defaultValue: columns.defaultValue
         })
             .from(columns)
             .innerJoin(tables, eq(columns.tableId, tables.id))
@@ -103,6 +104,7 @@ export class DiagramService {
         onUpdate?: string;
         diagramId: string;
         enumId?: string;
+        defaultValue?: string;
     }) {
         const columnId = crypto.randomUUID();
 
@@ -113,7 +115,8 @@ export class DiagramService {
             type: data.type,
             isPk: data.isPk,
             isNullable: data.isNullable,
-            enumId: data.enumId || null
+            enumId: data.enumId || null,
+            defaultValue: data.defaultValue || null
         });
 
         if (data.fkTableId && data.fkColumnId) {
@@ -144,13 +147,15 @@ export class DiagramService {
         onUpdate?: string;
         diagramId: string;
         enumId?: string;
+        defaultValue?: string;
     }) {
         await db.update(columns).set({
             name: data.name,
             type: data.type,
             isPk: data.isPk,
             isNullable: data.isNullable,
-            enumId: data.enumId || null
+            enumId: data.enumId || null,
+            defaultValue: data.defaultValue || null
         }).where(eq(columns.id, data.columnId));
 
         // First delete existing relation from this column if any

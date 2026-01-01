@@ -16,6 +16,7 @@ export interface ColumnData {
     isPk: boolean | null;
     isNullable: boolean | null;
     enumId?: string | null;
+    defaultValue?: string | null;
 }
 
 export interface EnumData {
@@ -74,6 +75,7 @@ export interface EditColumnDialogProps {
     relations: RelationData[];
     fetcher: ReturnType<typeof useFetcher>;
     enums: EnumData[];
+    allEnumValues: EnumValueData[];
 }
 
 export interface AddColumnDialogProps {
@@ -86,6 +88,7 @@ export interface AddColumnDialogProps {
     selectedFkTableId: string;
     setSelectedFkTableId: (value: string) => void;
     enums: EnumData[];
+    allEnumValues: EnumValueData[];
 }
 export interface AddTableDialogProps {
     fetcher: ReturnType<typeof useFetcher>;
