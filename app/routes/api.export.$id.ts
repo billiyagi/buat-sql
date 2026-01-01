@@ -40,6 +40,15 @@ function generateSqlExport(diagram: any, tables: any[], columns: any[], relation
             let line = `  ${q}${col.name}${q} ${col.type}`;
             if (col.isPk) line += " PRIMARY KEY";
             if (!col.isNullable) line += " NOT NULL";
+            if (col.defaultValue) {
+                if (col.defaultValue === "uuid()") {
+                    line += " DEFAULT (uuid())";
+                } else if (col.defaultValue === "now()") {
+                    line += " DEFAULT CURRENT_TIMESTAMP";
+                } else {
+                    line += ` DEFAULT ${col.defaultValue}`;
+                }
+            }
             return line;
         });
         sql += lines.join(",\n");
@@ -92,6 +101,15 @@ function generatePrismaExport(diagram: any, tables: any[], columns: any[], relat
 
             let line = `  ${col.name} ${type}${col.isNullable ? "?" : ""}`;
             if (col.isPk) line += " @id";
+            if (col.defaultValue) {
+                if (col.defaultValue === "uuid()") {
+                    line += " @default(uuid())";
+                } else if (col.defaultValue === "now()") {
+                    line += " @default(now())";
+                } else {
+                    line += ` @default(${col.defaultValue})`;
+                }
+            }
 
             // Note: relations in Prisma require explicit relation fields which we'll add after simple fields
             prisma += line + "\n";
@@ -120,7 +138,7 @@ function generatePrismaExport(diagram: any, tables: any[], columns: any[], relat
 }
 
 function generateDrizzleExport(diagram: any, tables: any[], columns: any[], relations: any[], enumsList: any[], enumValuesList: any[]) {
-    let drizzle = `import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";\n\n`;
+    let drizzle = `import { sqliteTable, text, integer, real, sql } from "drizzle-orm/sqlite-core";\n\n`;
 
     // Drizzle SQLite Enums as Text with constraints or just exported list
     for (const en of enumsList) {
@@ -138,6 +156,15 @@ function generateDrizzleExport(diagram: any, tables: any[], columns: any[], rela
             let line = `  ${col.name}: ${mapDrizzleType(col.type)}("${col.name}")`;
             if (col.isPk) line += ".primaryKey()";
             if (!col.isNullable) line += ".notNull()";
+            if (col.defaultValue) {
+                if (col.defaultValue === "uuid()") {
+                    line += ".default(sql`uuid_generate_v4()`)";
+                } else if (col.defaultValue === "now()") {
+                    line += ".default(sql`now()`)";
+                } else {
+                    line += `.default(${col.defaultValue})`;
+                }
+            }
 
             // References
             const rel = relations.find(r => r.fromColumnId === col.id);
