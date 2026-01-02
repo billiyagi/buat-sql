@@ -151,12 +151,12 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
     const isInitializing = initFetcher.state !== "idle";
 
     return (
-        <div className="fixed top-0 right-0 h-full w-[800px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="fixed top-0 right-0 h-full w-[800px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                    <FlaskConical className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-semibold">Data Sandbox</h2>
+                    <FlaskConical className="h-5 w-5 text-blue-500" />
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Data Sandbox</h2>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onClose}>
                     <X className="h-4 w-4" />
@@ -164,16 +164,16 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
             </div>
 
             {/* Status Bar */}
-            <div className="flex items-center gap-4 px-4 py-3 bg-muted/50 border-b border-border text-sm">
+            <div className="flex items-center gap-4 px-4 py-3 bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-sm">
                 {isLoading ? (
-                    <span className="text-muted-foreground">Loading...</span>
+                    <span className="text-slate-500 dark:text-slate-400">Loading...</span>
                 ) : status?.exists ? (
                     <>
-                        <span className="flex items-center gap-1.5">
+                        <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                             <span className={`w-2 h-2 rounded-full ${status.isStale ? 'bg-yellow-500' : 'bg-green-500'}`} />
                             {status.isStale ? "Out of sync" : "Active"}
                         </span>
-                        <span className="text-muted-foreground">
+                        <span className="text-slate-500 dark:text-slate-400">
                             {status.tableCount} tables
                         </span>
                         <Button
@@ -193,7 +193,7 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
                     </>
                 ) : (
                     <>
-                        <span className="text-muted-foreground">Not initialized</span>
+                        <span className="text-slate-500 dark:text-slate-400">Not initialized</span>
                         <Button
                             variant="default"
                             size="sm"
@@ -214,7 +214,7 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
 
             {/* Error Display */}
             {error && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-destructive/10 text-destructive text-sm border-b border-border">
+                <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 dark:text-red-400 text-sm border-b border-slate-200 dark:border-slate-800">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     <span className="truncate">{error}</span>
                     <Button
@@ -230,7 +230,7 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
 
             {/* Table Tabs */}
             {status?.exists && (
-                <div className="flex gap-1 p-2 border-b border-border overflow-x-auto">
+                <div className="flex gap-1 p-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto bg-white dark:bg-slate-900">
                     {tables.map(table => (
                         <Button
                             key={table.id}
@@ -248,33 +248,33 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
             {/* Data Grid */}
             <div className="flex-1 overflow-auto p-4">
                 {!status?.exists ? (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <FlaskConical className="h-12 w-12 mb-4 opacity-50" />
                         <p className="text-center">
                             Initialize the sandbox to start testing your schema with real data.
                         </p>
                     </div>
                 ) : tableColumns.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8">
+                    <div className="text-center text-slate-500 dark:text-slate-400 py-8">
                         No columns in selected table
                     </div>
                 ) : (
-                    <div className="border rounded-lg overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead className="bg-muted">
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                        <table className="w-full text-sm table-fixed">
+                            <thead className="bg-slate-100 dark:bg-slate-800">
                                 <tr>
                                     {tableColumns.map(col => (
                                         <th
                                             key={col.id}
-                                            className="text-left px-3 py-2 font-medium border-b"
+                                            className="text-left px-3 py-2 font-medium border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 truncate"
                                         >
                                             {col.name}
                                             {col.isPk && (
-                                                <span className="ml-1 text-xs text-primary">PK</span>
+                                                <span className="ml-1 text-xs text-blue-500">PK</span>
                                             )}
                                         </th>
                                     ))}
-                                    <th className="w-20 px-3 py-2 border-b">Actions</th>
+                                    <th className="w-20 px-3 py-2 border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 flex-shrink-0">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -282,18 +282,18 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
                                     <tr>
                                         <td
                                             colSpan={tableColumns.length + 1}
-                                            className="text-center text-muted-foreground py-8"
+                                            className="text-center text-slate-500 dark:text-slate-400 py-8"
                                         >
                                             No data yet. Click "Add Row" to insert test data.
                                         </td>
                                     </tr>
                                 ) : (
                                     rows.map((row, idx) => (
-                                        <tr key={idx} className="border-b last:border-0 hover:bg-muted/50">
+                                        <tr key={idx} className="border-b border-slate-200 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                             {tableColumns.map(col => (
-                                                <td key={col.id} className="px-3 py-2">
+                                                <td key={col.id} className="px-3 py-2 text-slate-700 dark:text-slate-300 truncate max-w-[200px]" title={row[col.name] === null ? 'null' : String(row[col.name])}>
                                                     {row[col.name] === null ? (
-                                                        <span className="text-muted-foreground italic">null</span>
+                                                        <span className="text-slate-400 dark:text-slate-500 italic">null</span>
                                                     ) : (
                                                         String(row[col.name])
                                                     )}
@@ -330,7 +330,7 @@ export function SandboxPanel({ diagramId, tables, columns, enums, enumValues, re
 
             {/* Footer with Add Button */}
             {status?.exists && selectedTable && (
-                <div className="p-4 border-t border-border">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <Button
                         className="w-full"
                         onClick={() => setShowAddDialog(true)}
