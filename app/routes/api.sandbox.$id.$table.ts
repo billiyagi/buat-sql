@@ -32,11 +32,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent") as string;
 
-    if (request.method === "POST" || intent === "insert") {
-        // Get all form fields except intent
+    if (intent === "insert" || (!intent && request.method === "POST")) {
+        // Get all form fields except intent and pk-related fields
         const rowData: Record<string, any> = {};
         for (const [key, value] of formData.entries()) {
-            if (key !== "intent" && key !== "pkColumn") {
+            if (key !== "intent" && key !== "pkColumn" && key !== "pkValue") {
                 if (value === "__NULL__") {
                     rowData[key] = null;
                 } else if (value !== "") {
