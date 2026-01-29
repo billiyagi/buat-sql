@@ -4,7 +4,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./sqlite.db:/app/sqlite.db
+      - ./data:/app/data
     environment:
       - NODE_ENV=production
+      - DATABASE_FILE=data/sqlite.db
     restart: unless-stopped
