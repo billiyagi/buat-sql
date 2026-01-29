@@ -68,13 +68,20 @@ npm run build
 
 The output will be located in the `build/` directory, separated into `client/` and `server/`.
 
-### Docker
 
-A `Dockerfile` is included for containerized deployment. To build and run:
+1.  Start the services (Database migration runs automatically):
+    ```bash
+    docker compose up -d --build
+    ```
+
+
+### Docker (Stand-alone)
+
+To build and run a single container:
 
 ```bash
 docker build -t buat-sql .
-docker run -p 3000:3000 buat-sql
+docker run -p 3000:3000 -v $(pwd)/data:/app/data -e DATABASE_FILE=data/sqlite.db buat-sql
 ```
 
 ## 📄 License
