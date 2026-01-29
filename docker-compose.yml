@@ -1,0 +1,10 @@
+services:
+  sqldiagram:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./sqlite.db:/app/sqlite.db
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
